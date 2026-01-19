@@ -15,9 +15,16 @@ let darwinPlatforms: [Platform] = [
 var swiftSettings: [SwiftSetting] = [
     .define("SQLITE_ENABLE_FTS5"),
     .define("SQLITE_ENABLE_SNAPSHOT"),
+    .define("GRDBCIPHER"),
+    .define("SQLITE_HAS_CODEC")
 ]
-var cSettings: [CSetting] = []
-var dependencies: [PackageDescription.Package.Dependency] = []
+var cSettings: [CSetting] = [
+    .define("SQLITE_HAS_CODEC"),
+    .define("GRDBCIPHER"),
+]
+var dependencies: [PackageDescription.Package.Dependency] = [
+    .package(url: "https://github.com/sqlcipher/SQLCipher.swift.git", from: "4.10.0")
+]
 
 // Don't rely on those environment variables. They are ONLY testing conveniences:
 // $ SQLITE_ENABLE_PREUPDATE_HOOK=1 make test_SPM
@@ -48,6 +55,7 @@ let package = Package(
     products: [
         .library(name: "GRDBSQLite", targets: ["GRDBSQLite"]),
         .library(name: "GRDB", targets: ["GRDB"]),
+        .library(name: "GRDBCipher", targets: ["GRDBCipher"]),
         .library(name: "GRDB-dynamic", type: .dynamic, targets: ["GRDB"]),
     ],
     dependencies: dependencies,
@@ -59,6 +67,16 @@ let package = Package(
             name: "GRDB",
             dependencies: [
                 .target(name: "GRDBSQLite"),
+            ],
+            path: "GRDB",
+            resources: [.copy("PrivacyInfo.xcprivacy")],
+            cSettings: cSettings,
+            swiftSettings: swiftSettings),
+        .target(
+            name: "GRDBCipher",
+            dependencies: [
+                .target(name: "GRDBSQLite"),
+                .product(name: "SQLCipher", package: "SQLCipher.swift"),
             ],
             path: "GRDB",
             resources: [.copy("PrivacyInfo.xcprivacy")],
